@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Config
+
+clusters:
+- name: minikube
+  cluster:
+    server: <server-url>
+
+users:
+- name: remote-user
+  user:
+    token: <JWT>
+
+contexts:
+- name: remote-context
+  context:
+    cluster: minikube
+    user: remote-user
+
+current-context: remote-context
