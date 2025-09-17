@@ -11,7 +11,7 @@ jobs:
       - name: Install kubectl
         run: |
           mkdir $HOME/bin
-          curl -Lf 'https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl' -o $HOME/bin/kubectl
+          curl -Lf "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" -o $HOME/bin/kubectl
           chmod +x $HOME/bin/kubectl
           echo "$HOME/bin" >> $GITHUB_PATH
 
