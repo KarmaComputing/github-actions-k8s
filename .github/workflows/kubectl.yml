@@ -30,3 +30,6 @@ jobs:
 
       - name: Run kubectl command against remote API
         run: kubectl get namespaces
+
+      - name: kubectl apply with a file
+        run: kubectl apply -f "${GITHUB_WORKSPACE}/manifests/nginx-test.yml"
