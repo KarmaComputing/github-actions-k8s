@@ -6,8 +6,8 @@ on:
     branches:
       - "1-github-runner-manages-remote"
     paths-ignore:
-      - *.md
-      - *.example
+      - "*.md"
+      - "*.example"
 
 jobs:
   deploy:
