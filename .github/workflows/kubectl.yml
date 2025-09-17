@@ -4,7 +4,7 @@ on:
   workflow_dispatch: # Allows manual start of workflows
   push:
     branches:
-      - "1-github-runner-manages-remote"
+      - "main"
     paths-ignore:
       - "*.md"
       - "*.example"
