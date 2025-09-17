@@ -1,4 +1,3 @@
 kube-config
 *.crt
 *.key
-kubectl

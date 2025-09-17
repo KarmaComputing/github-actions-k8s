@@ -29,7 +29,7 @@
         kubectl config set-context "remote-context" --cluster "minikube" --user "remote-dev"
         kubectl config use-context "remote-context"
 
-      # kubectl command steps ... #
+    # kubectl command steps ... #
   ```
 
 3. Create the full workflow
@@ -47,7 +47,7 @@
   on:
     push:
       branches:
-        - "1-github-runner-manages-remote"
+        - "main"
   jobs:
     deploy:
       runs-on: ubuntu-latest
@@ -74,4 +74,15 @@
 
         - name: Run kubectl command against remote API
           run: kubectl get namespaces
+  ```
+
+  - With this, we have remote access to the API in according with the RBAC rules we created earlier
+  - If you wanted to `kubectl apply -f` in this action, you could do so like below:
+
+  ```yaml
+    # previous setup steps #
+
+    - name: kubectl apply with a file
+        run: |
+          kubectl apply -f "${GITHUB_WORKSPACE}/manifests/nginx-test.yml"
   ```
