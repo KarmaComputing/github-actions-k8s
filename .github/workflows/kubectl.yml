@@ -1,9 +1,14 @@
 name: Run kubectl against remote cluster
+
 on:
   workflow_dispatch: # Allows manual start of workflows
   push:
     branches:
       - "1-github-runner-manages-remote"
+    paths-ignore:
+      - *.md
+      - *.example
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
