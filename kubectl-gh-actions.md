@@ -2,7 +2,7 @@
 
 # Steps
 
-1. Add secrets for the server address and JWT token
+1. Add secrets for the server address and JWT token, and other variables
 
   - Note that generated JWT tokens are relatively short-lived, but you can extend their validity by passing `--duration=<timespan>` to `kubectl create token`
     - e.g. `kubectl create-token remote-dev --duration=12h` for a token valid for 12 hours
@@ -10,13 +10,21 @@
 
   - On the webpage for your repo:
     - Settings -> Secrets and Variables -> Actions -> New Repository Secret
-    - Set the name to `JWT_AUTH_TOKEN`
+    - Set the name to `KUBE_JWT_AUTH_TOKEN`
     - Set the value to the JWT token you generated
-  - Add another secret called `API_SERVER_ADDR` with the value of your public-facing API server address
+  - Add another secret called `KUBE_API_SERVER_ADDR` with the value of your public-facing API server address
 
-2. Access the secret in the action
+  - We'll also add some variables for the cluster, remote username, and remote context
+  - On the webpage for your repo:
+    - Settings -> Secrets and Variables -> Actions -> Variables -> New Repository Variable
+    - Add three variables with the names and values:
+      - KUBE_REMOTE_CLUSTER = minikube
+      - KUBE_REMOTE_USER = remote-dev
+      - KUBE_REMOTE_CONTEXT = remote-context
 
-  - Github actions can access repository secrets using the syntax `${{ secrets.<secret> }}`
+2. Access the secrets and variables in the action
+
+  - Github actions can access repository secrets using the syntax `${{ secrets.<secret> }}` and variables with `${{ vars.<variable> }}`
   - We'll create a step in our action that sets the correct kubeconfig
 
   ```yaml
@@ -24,13 +32,15 @@
 
     - name: Set kubeconfig with kubectl
       run: |
-        kubectl config set-cluster "minikube" --server "${{ secrets.API_SERVER_ADDR }}"
-        kubectl config set-credentials "remote-dev" --token "${{ secrets.JWT_AUTH_TOKEN }}"
-        kubectl config set-context "remote-context" --cluster "minikube" --user "remote-dev"
-        kubectl config use-context "remote-context"
+        kubectl config set-cluster "${{ vars.KUBE_REMOTE_CLUSTER }}" --server "${{ secrets.KUBE_API_SERVER_ADDR }}"
+        kubectl config set-credentials "${{ vars.KUBE_REMOTE_USER }}" --token "${{ secrets.KUBE_JWT_AUTH_TOKEN }}"
+        kubectl config set-context "${{ vars.KUBE_REMOTE_CONTEXT }}" --cluster "${{ vars.KUBE_REMOTE_CLUSTER }}" --user "${{ vars.KUBE_REMOTE_USER }}"
+        kubectl config use-context "${{ vars.KUBE_REMOTE_CONTEXT }}"
 
     # kubectl command steps ... #
   ```
+
+  - Using these variables and secrets makes it easier to update them in the future, without modifying the workflow file directly
 
 3. Create the full workflow
 
@@ -45,6 +55,7 @@
 
   name: Run kubectl against remote cluster
   on:
+    workflow_dispatch: # Allows manual start of workflows
     push:
       branches:
         - "main"
@@ -54,8 +65,8 @@
       steps:
         - name: Install kubectl
           run: |
-            mkdir $HOME/bin
-            curl -Lf 'https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl' -o $HOME/bin/kubectl
+            mkdir "$HOME/bin"
+            curl -Lf "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" -o "$HOME/bin/kubectl"
             chmod +x $HOME/bin/kubectl
             echo "$HOME/bin" >> $GITHUB_PATH
 
@@ -67,10 +78,10 @@
 
         - name: Set kubeconfig with kubectl
           run: |
-            kubectl config set-cluster "minikube" --server "${{ secrets.API_SERVER_ADDR }}"
-            kubectl config set-credentials "remote-dev" --token "${{ secrets.JWT_AUTH_TOKEN }}"
-            kubectl config set-context "remote-context" --cluster "minikube" --user "remote-dev"
-            kubectl config use-context "remote-context"
+            kubectl config set-cluster "${{ vars.KUBE_REMOTE_CLUSTER }}" --server "${{ secrets.KUBE_API_SERVER_ADDR }}"
+            kubectl config set-credentials "${{ vars.KUBE_REMOTE_USER }}" --token "${{ secrets.KUBE_JWT_AUTH_TOKEN }}"
+            kubectl config set-context "${{ vars.KUBE_REMOTE_CONTEXT }}" --cluster "${{ vars.KUBE_REMOTE_CLUSTER }}" --user "${{ vars.KUBE_REMOTE_USER }}"
+            kubectl config use-context "${{ vars.KUBE_REMOTE_CONTEXT }}"
 
         - name: Run kubectl command against remote API
           run: kubectl get namespaces
@@ -83,6 +94,5 @@
     # previous setup steps #
 
     - name: kubectl apply with a file
-        run: |
-          kubectl apply -f "${GITHUB_WORKSPACE}/manifests/nginx-test.yml"
+      run: kubectl apply -f "${GITHUB_WORKSPACE}/manifests/nginx-test.yml"
   ```
