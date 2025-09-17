@@ -32,4 +32,5 @@ jobs:
         run: kubectl get namespaces
 
       - name: kubectl apply with a file
-        run: kubectl apply -f "${HOME}/${GITHUB_REPOSITORY}/manifests/nginx-test.yml"
+        run: |
+          kubectl apply -f "${GITHUB_WORKSPACE}/manifests/nginx-test.yml"
