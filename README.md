@@ -11,3 +11,4 @@
   - A publicly accessibly IP address/domain is required
 
 - First up, read through/follow [manual-remote-access.md](./manual-remote-access.md) for setting up the cluster and general knowledge remote `kubectl` management of clusters
+- Then, you can follow along with [kubectl-gh-actions.md](./kubectl-gh-actions.md) for setting up a github actions workflow which runs `kubectl apply` against a remote cluster
