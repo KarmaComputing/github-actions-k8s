@@ -70,44 +70,7 @@ host: Running
 kubelet: Running
 ```
 
-5. Disable anonymous API access
-
-```shell
-ubuntu@kubectl-ghactions-test:~$ minikube ssh
-docker@minikube:~$ sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
-```
-
-- Add `--anonymous-auth=false` under `command`
-- Save and exit, minikube will automatically restart the API server, you may have to wait a few seconds
-
-- See that anonymous requests are blocked
-
-```shell
-ubuntu@kubectl-ghactions-test:~$ curl -k https://$(minikube ip):8443/api/v1/namespaces/default/pods
-{
-  "kind": "Status",
-  "apiVersion": "v1",
-  "metadata": {},
-  "status": "Failure",
-  "message": "Unauthorized",
-  "reason": "Unauthorized",
-  "code": 401
-}
-
-ubuntu@kubectl-ghactions-test:~$ curl --cert /home/ubuntu/.minikube/profiles/minikube/client.crt \
-      --key /home/ubuntu/.minikube/profiles/minikube/client.key \
-      -k https://$(minikube ip):8443/api/v1/namespaces/default/pods
-{
-  "kind": "PodList",
-  "apiVersion": "v1",
-  "metadata": {
-    "resourceVersion": "1080"
-  },
-  "items": []
-}
-```
-
-7. Run the kube-API proxy on the server
+5. Run the kube-API proxy on the server
 
 - We're going to use an apache2 webserver to proxy requests to the server to the minikube kube-API
 
@@ -152,7 +115,7 @@ ubuntu@kubectl-ghactions-test:~$ curl --cert /home/ubuntu/.minikube/profiles/min
   ubuntu@kubectl-ghactions-test:~$ sudo a2ensite kubectl
   ```
 
-8. Check if the API is accessible remotely
+6. Check if the API is accessible remotely
 
 ```shell
 $ curl -X GET <your-server-url>/api
@@ -161,19 +124,22 @@ $ curl -X GET <your-server-url>/api
   "apiVersion": "v1",
   "metadata": {},
   "status": "Failure",
-  "message": "Unauthorized",
-  "reason": "Unauthorized",
-  "code": 401
+  "message": "forbidden: User \"system:anonymous\" cannot get path \"/api/\"",
+  "reason": "Forbidden",
+  "details": {},
+  "code": 403
 }
 ```
 
-9. Authorize with the API
+7. Authorize with the API
 
 - See [Using RBAC Authorization | Kubernetes](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
 
 - On the minikube host:
   1. Create a service account, `ClusterRoleBinding`, and token
 
+  - We create a service account called remote-dev that we will authenticate as
+  - We then create a `ClusterRoleBinding` referencing the `cluster-admin` role (created by default which provides full access to everything in the cluster) and bind the remote-dev account we just created to it
   ```shell
   ubuntu@kubectl-ghactions-test:~$ kubectl create serviceaccount remote-dev
   ubuntu@kubectl-ghactions-test:~$ kubectl create clusterrolebinding remote-dev-binding \
