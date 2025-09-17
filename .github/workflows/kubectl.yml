@@ -28,5 +28,8 @@ jobs:
           kubectl config set-context "remote-context" --cluster "minikube" --user "remote-dev"
           kubectl config use-context "remote-context"
 
-      - name: Run kubectl command against remote API
+      - name: Check kubectl has authenticated/authorized access to the remote API
         run: kubectl get namespaces
+
+      - name: kubectl apply with a file
+        run: kubectl apply -f "${HOME}/${GITHUB_REPOSITORY}/manifests/nginx-test.yml"
