@@ -1,0 +1,32 @@
+name: Run kubectl against remote cluster
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "1-github-runner-manages-remote"
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install kubectl
+        run: |
+          mkdir $HOME/bin
+          curl -Lf 'https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl' -o $HOME/bin/kubectl
+          chmod +x $HOME/bin/kubectl
+          echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Check kubectl is available on PATH
+        run: kubectl version --client
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set kubeconfig with kubectl
+        run: |
+          kubectl config set-cluster "minikube" --server "${{ secrets.API_SERVER_ADDR }}"
+          kubectl config set-credentials "remote-dev" --token "${{ secrets.JWT_AUTH_TOKEN }}"
+          kubectl config set-context "remote-context" --cluster "minikube" --user "remote-dev"
+          kubectl config use-context "remote-context"
+
+      - name: Run kubectl command against remote API
+        run: kubectl get namespaces
