@@ -138,8 +138,8 @@ $ curl -X GET <your-server-url>/api
 - On the minikube host:
   1. Create a service account, `ClusterRoleBinding`, and token
 
-  - We create a service account called remote-dev that we will authenticate as
-  - We then create a `ClusterRoleBinding` referencing the `cluster-admin` role (created by default which provides full access to everything in the cluster) and bind the remote-dev account we just created to it
+    - We create a service account called remote-dev that we will authenticate as
+    - We then create a `ClusterRoleBinding` referencing the `cluster-admin` role (created by default which provides full access to everything in the cluster) and bind the remote-dev account we just created to it
   ```shell
   ubuntu@kubectl-ghactions-test:~$ kubectl create serviceaccount remote-dev
   ubuntu@kubectl-ghactions-test:~$ kubectl create clusterrolebinding remote-dev-binding \
@@ -177,7 +177,7 @@ current-context: remote-context
 - Test access by making a request
 
 ```shell
-$ KUBECONFIG=$(pwd)/kube-config ./kubectl get ns
+$ KUBECONFIG=$(pwd)/kube-config kubectl get ns
 NAME              STATUS   AGE
 default           Active   7m57s
 kube-node-lease   Active   7m57s
