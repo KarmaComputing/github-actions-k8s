@@ -95,3 +95,9 @@ jobs:
 - name: kubectl apply with a file
   run: kubectl apply -f "${GITHUB_WORKSPACE}/manifests/nginx-test.yml"
 ```
+
+3. Make this a bit more robust
+
+    1. First up we can separate the logic for installing and configuring `kubectl` into a reusable action.
+
+        - Separating the setup and configuration of `kubectl` into a reusable action makes it reusable across any number of workflows (duh) but also allows for controlled caching of the `kubectl` binary.
