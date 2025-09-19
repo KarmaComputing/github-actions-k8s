@@ -24,10 +24,10 @@
 
 2. Access the secrets and variables in the action
 
-  - Github actions can access repository secrets using the syntax `${{ secrets.<secret> }}` and variables with `${{ vars.<variable> }}`
-  - We'll create a step in our action that sets the correct kubeconfig
+    - Github actions can access repository secrets using the syntax `${{ secrets.<secret> }}` and variables with `${{ vars.<variable> }}`
+    - We'll create a step in our action that sets the correct kubeconfig
 
-  ```yaml
+    ```yaml
     # Other steps... #
 
     - name: Set kubeconfig with kubectl
@@ -38,29 +38,33 @@
         kubectl config use-context "${{ vars.KUBE_REMOTE_CONTEXT }}"
 
     # kubectl command steps ... #
-  ```
+    ```
 
   - Using these variables and secrets makes it easier to update them in the future, without modifying the workflow file directly
 
 3. Create the full workflow
 
-  - So we need to:
-    1. Make sure the `kubectl` binary is available
-    2. Checkout the repo
-    3. Configure authentication with kubectl
-    4. Run `kubectl` commands against the remote API
+    - So we need to:
+        1. Make sure the `kubectl` binary is available
+        2. Checkout the repo
+        3. Configure authentication with kubectl
+        4. Run `kubectl` commands against the remote API
+    - We can also make the workflow not run when only documentation was updated in a push using `paths-ignore`
 
-  ```yaml
-  # File: .github/workflows/kubectl.yaml
+    ```yaml
+    # File: .github/workflows/kubectl.yaml
 
-  name: Run kubectl against remote cluster
-  on:
-    workflow_dispatch: # Allows manual start of workflows
-    push:
-      branches:
-        - "main"
-  jobs:
-    deploy:
+    name: Run kubectl against remote cluster
+    on:
+      workflow_dispatch: # Allows manual start of workflows
+      push:
+        branches:
+          - "master"
+        paths-ignore:
+          - "*.md"
+          - "*.example"
+    jobs:
+      deploy:
       runs-on: ubuntu-latest
       steps:
         - name: Install kubectl
@@ -85,14 +89,28 @@
 
         - name: Run kubectl command against remote API
           run: kubectl get namespaces
-  ```
+    ```
 
-  - With this, we have remote access to the API in according with the RBAC rules we created earlier
-  - If you wanted to `kubectl apply -f` in this action, you could do so like below:
+    - With this, we have remote access to the API in according with the RBAC rules we created earlier
+    - If you wanted to `kubectl apply -f` in this action, you could do so like below:
 
   ```yaml
-    # previous setup steps #
+  # previous setup steps #
 
-    - name: kubectl apply with a file
-      run: kubectl apply -f "${GITHUB_WORKSPACE}/manifests/nginx-test.yml"
+  - name: kubectl apply with a file
+    run: kubectl apply -f "${GITHUB_WORKSPACE}/manifests/nginx-test.yml"
   ```
+
+3. Make this a bit more robust
+
+    - Taking inspiration from tools like [Argo CD](https://argo-cd.readthedocs.io/en/stable/), we can attempt to automatically "sync" the remote cluster to the current stat of the git repo
+    - For a simple implementation of this, we can set the workflow to run on a regular cadence using a cron schedule
+
+    ```yaml
+    # File: ./github/workflows/kubectl.yml
+
+    on:
+      # other triggers snipped for brevity #
+      schedule:
+        - cron: "0 * * * *"
+    ```
