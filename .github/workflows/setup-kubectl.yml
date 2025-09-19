@@ -1,0 +1,43 @@
+name: Run kubectl against remote cluster
+
+on:
+  workflow_call:
+    inputs:
+      KUBE_REMOTE_CLUSTER:
+        description: "Name of the remote cluster"
+        required: true
+        type: string
+      KUBE_REMOTE_USER:
+        description: "Remote cluster user to authenticate as"
+        required: true
+        type: string
+      KUBE_REMOTE_CONTEXT:
+        description: "Remote cluster context for the local machine"
+        required: true
+        type: string
+    secrets:
+      KUBE_API_SERVER_ADDR:
+        description: "Kubernetes API server address"
+      KUBE_JWT_AUTH_TOKEN:
+        description: "JWT token for Kubernetes authentication"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install kubectl
+        run: |
+          mkdir "$HOME/bin"
+          curl -Lf "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" -o "$HOME/bin/kubectl"
+          chmod +x $HOME/bin/kubectl
+          echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Check kubectl is available on PATH
+        run: kubectl version --client
+
+      - name: Set kubeconfig with kubectl
+        run: |
+          kubectl config set-cluster "${{ inputs.KUBE_REMOTE_CLUSTER }}" --server "${{ secrets.KUBE_API_SERVER_ADDR }}"
+          kubectl config set-credentials "${{ inputs.KUBE_REMOTE_USER }}" --token "${{ secrets.KUBE_JWT_AUTH_TOKEN }}"
+          kubectl config set-context "${{ inputs.KUBE_REMOTE_CONTEXT }}" --cluster "${{ inputs.KUBE_REMOTE_CLUSTER }}" --user "${{ inputs.KUBE_REMOTE_USER }}"
+          kubectl config use-context "${{ inputs.KUBE_REMOTE_CONTEXT }}"
